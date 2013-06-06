@@ -138,6 +138,7 @@ public class Main {
 								ImageIO.write(bufferedThumbnail, "jpeg", output);
 								
 								File output2 = File.createTempFile(UUID.randomUUID()+"", "");
+								output2.deleteOnExit();
 								FileOutputStream os = new FileOutputStream(output2);
 								new ExifRewriter().updateExifMetadataLossless(output, os, jpegMetadata.getExif().getOutputSet());
 								output.delete();
@@ -159,6 +160,7 @@ public class Main {
 								myPhoto.setMediaSource(myMedia);
 								PhotoEntry returnedPhoto = myService.insert(albumPostUrl, myPhoto);								
 								
+								output2.delete();
 							}
 						} catch (ImageReadException r) {
 							log.info(ph + ": NO IMAGE");
