@@ -3,6 +3,7 @@ package net.marioosh.picasa.uploader;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import org.apache.sanselan.ImageReadException;
 import org.apache.sanselan.Sanselan;
 import org.apache.sanselan.common.IImageMetadata;
 import org.apache.sanselan.formats.jpeg.JpegImageMetadata;
+import org.apache.sanselan.formats.jpeg.exifRewrite.ExifRewriter;
 import com.google.gdata.client.photos.PicasawebService;
 import com.google.gdata.data.PlainTextConstruct;
 import com.google.gdata.data.media.MediaFileSource;
@@ -135,6 +137,11 @@ public class Main {
 								output.deleteOnExit();
 								ImageIO.write(bufferedThumbnail, "jpeg", output);
 								
+								File output2 = File.createTempFile(UUID.randomUUID()+"", "");
+								FileOutputStream os = new FileOutputStream(output2);
+								new ExifRewriter().updateExifMetadataLossless(output, os, jpegMetadata.getExif().getOutputSet());
+								output.delete();
+								
 								/*
 								ByteArrayOutputStream out = new ByteArrayOutputStream();
 								ImageIO.write(bufferedThumbnail, "jpeg", out);
@@ -148,7 +155,7 @@ public class Main {
 								URL albumPostUrl = new URL(insertedEntry.getId().replace("/entry","/feed/api"));// new URL("https://picasaweb.google.com/data/feed/api/user/default/albumid/"+insertedEntry.getId());
 								PhotoEntry myPhoto = new PhotoEntry();
 								myPhoto.setClient("myClientName");
-								MediaFileSource myMedia = new MediaFileSource(output, "image/jpeg");
+								MediaFileSource myMedia = new MediaFileSource(output2, "image/jpeg");
 								myPhoto.setMediaSource(myMedia);
 								PhotoEntry returnedPhoto = myService.insert(albumPostUrl, myPhoto);								
 								
