@@ -57,7 +57,7 @@ public class Main {
 			CommandLine cmd = new PosixParser().parse(options, args);
 			if (cmd.hasOption("h")) {
 				HelpFormatter formatter = new HelpFormatter();
-				formatter.printHelp("java -jar picasa-uploader.jar [options] <dir>", options);
+				formatter.printHelp("java -jar picasa-uploader.jar [options] <dir1|file1> <dir2|file2> ...", options);
 				return;
 			}
 			String title = cmd.hasOption("t") && cmd.getOptionValue("t") != null ? cmd.getOptionValue("t") : sdf.format(new Date());
@@ -88,10 +88,6 @@ public class Main {
 
 				List<String> files = list(cmd.getArgs(), null);
 
-				for (String f : files) {
-					log.info(f);
-				}
-
 				if (files.size() > 0) {
 
 					/**
@@ -103,7 +99,6 @@ public class Main {
 						myAlbum.setDescription(new PlainTextConstruct(descr));
 					}
 					AlbumEntry insertedEntry = myService.insert(feedUrl, myAlbum);
-					log.info(insertedEntry.getId());
 
 					/**
 					 * add files to album
@@ -158,6 +153,8 @@ public class Main {
 					}
 				}
 			}
+			
+			log.info("DONE.");
 
 		} catch (Exception e) {
 			e.printStackTrace();
