@@ -12,6 +12,7 @@ import java.util.UUID;
 import javax.imageio.ImageIO;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
@@ -45,19 +46,24 @@ public class Main {
 			Options options = new Options();
 			options.addOption("h", false, "help");
 			options.addOption("v", false, "be verbose");
-			Option user = new Option("u", true, "user");
+			Option user = new Option("u", true, "user [REQUIRED]");
 			user.setRequired(true);
 			options.addOption(user);
-			Option pass = new Option("p", true, "password");
+			Option pass = new Option("p", true, "password [REQUIRED]");
 			pass.setRequired(true);
 			options.addOption(pass);
 			options.addOption("t", true, "album title");
 			options.addOption("d", true, "album description");
 			options.addOption("l", false, "list albums");
-			CommandLine cmd = new PosixParser().parse(options, args);
+			CommandLine cmd = null;
+			try {
+				cmd = new PosixParser().parse(options, args);
+			} catch (MissingOptionException e) {
+				syntax(options);
+				return;
+			}
 			if (cmd.hasOption("h")) {
-				HelpFormatter formatter = new HelpFormatter();
-				formatter.printHelp("java -jar picasa-uploader.jar [options] <dir1|file1> <dir2|file2> ...", options);
+				syntax(options);
 				return;
 			}
 			String title = cmd.hasOption("t") && cmd.getOptionValue("t") != null ? cmd.getOptionValue("t") : sdf.format(new Date());
@@ -66,6 +72,7 @@ public class Main {
 			/**
 			 * auth
 			 */
+			log.info("LOGGING...");
 			PicasawebService myService = new PicasawebService("exampleCo-exampleApp-1");
 			myService.setUserCredentials(cmd.getOptionValue("u"), cmd.getOptionValue("p"));
 
@@ -159,6 +166,11 @@ public class Main {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void syntax(Options options) {
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp("java -jar picasa-uploader.jar [options] <dir1|file1> <dir2|file2>...", options);
 	}
 
 	private List<String> list(String[] paths, List<String> files) {
