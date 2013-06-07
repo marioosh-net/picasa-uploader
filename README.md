@@ -22,10 +22,10 @@ Picasa Web Albums Console Uploader
   *Full syntax*
   
     usage: java -jar picasa-uploader.jar [options] <dir1|file1> <dir2|file2> ...
-     -d <arg>   album description
-     -h         help
-     -l         list albums
-     -p <arg>   password [REQUIRED]
-     -t <arg>   album title
-     -u <arg>   user [REQUIRED]
-     -v         be verbose
+     -d <description>   album description
+     -h                 help
+     -l                 list albums
+     -p <password>      password [REQUIRED]
+     -t <title>         album title
+     -u <username>      user [REQUIRED]
+     -v                 be verbose
