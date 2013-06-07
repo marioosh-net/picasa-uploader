@@ -74,6 +74,9 @@ public class Main {
 			Option titl = new Option("t", true, "album title");
 			titl.setArgName("title");
 			options.addOption(titl);
+			Option px = new Option("px", true, "resolution [px], default 1600");
+			px.setArgName("px");
+			options.addOption(px);			
 			Option desc = new Option("d", true, "album description");
 			desc.setArgName("description");
 			options.addOption(desc);
@@ -91,7 +94,14 @@ public class Main {
 			}
 			String title = cmd.hasOption("t") && cmd.getOptionValue("t") != null ? cmd.getOptionValue("t") : sdf.format(new Date());
 			String descr = cmd.hasOption("d") && cmd.getOptionValue("d") != null ? cmd.getOptionValue("d") : null;
-
+			int width = WIDTH;
+			if(cmd.hasOption("px") && cmd.getOptionValue("px") != null) {
+				try {
+					width = Integer.parseInt(cmd.getOptionValue("px"));
+				} catch (NumberFormatException e) {
+				}
+			}
+			
 			/**
 			 * auth
 			 */
@@ -142,7 +152,7 @@ public class Main {
 								/**
 								 * resize
 								 */
-								log.info(ph + " RESIZING...");
+
 								final JpegImageMetadata jpegMetadata = (JpegImageMetadata) meta;
 								BufferedImage sourceImage = ImageIO.read(f);
 								
@@ -151,26 +161,44 @@ public class Main {
 									horiz = false;
 								}
 								
-								Image thumbnail = sourceImage.getScaledInstance(horiz ? WIDTH : -1, horiz ? -1 : WIDTH, Image.SCALE_SMOOTH);
-								BufferedImage bufferedThumbnail = new BufferedImage(thumbnail.getWidth(null), thumbnail.getHeight(null), BufferedImage.TYPE_INT_RGB);
-								bufferedThumbnail.getGraphics().drawImage(thumbnail, 0, 0, null);
-								File output = File.createTempFile(UUID.randomUUID()+"", "");
-								output.deleteOnExit();
-								ImageIO.write(bufferedThumbnail, "jpeg", output);
-							
-								/**
-								 * restore exif
-								 */
-								File output2 = File.createTempFile(UUID.randomUUID()+"", "");
-								output2.deleteOnExit();
-								FileOutputStream os = new FileOutputStream(output2);
-								new ExifRewriter().updateExifMetadataLossless(output, os, jpegMetadata.getExif().getOutputSet());
-								
-								/*
-								ByteArrayOutputStream out = new ByteArrayOutputStream();
-								ImageIO.write(bufferedThumbnail, "jpeg", out);
-								out.close();
-								*/
+								File output2;
+								boolean resize = false;
+								if(horiz && sourceImage.getWidth() > width || !horiz && sourceImage.getHeight() > width) {
+									/**
+									 * resize
+									 */
+									log.info(ph + " RESIZING...");
+									resize = true;
+
+									Image thumbnail = sourceImage.getScaledInstance(horiz ? width : -1, horiz ? -1 : width, Image.SCALE_SMOOTH);
+									BufferedImage bufferedThumbnail = new BufferedImage(thumbnail.getWidth(null), thumbnail.getHeight(null), BufferedImage.TYPE_INT_RGB);
+									bufferedThumbnail.getGraphics().drawImage(thumbnail, 0, 0, null);
+									File output = File.createTempFile(UUID.randomUUID()+"", "");
+									output.deleteOnExit();
+									ImageIO.write(bufferedThumbnail, "jpeg", output);
+
+									/**
+									 * restore exif
+									 */
+									output2 = File.createTempFile(UUID.randomUUID()+"", "");
+									output2.deleteOnExit();
+									FileOutputStream os = new FileOutputStream(output2);
+									new ExifRewriter().updateExifMetadataLossless(output, os, jpegMetadata.getExif().getOutputSet());
+									
+									/*
+									ByteArrayOutputStream out = new ByteArrayOutputStream();
+									ImageIO.write(bufferedThumbnail, "jpeg", out);
+									out.close();
+									*/
+
+									/**
+									 * clear temp
+									 */
+									output.delete();
+									
+								} else {
+									output2 = f;
+								}
 								
 								/**
 								 * upload
@@ -178,16 +206,16 @@ public class Main {
 								log.info(ph + " UPLOADING...");
 								URL albumPostUrl = new URL(insertedEntry.getId().replace("/entry","/feed/api"));// new URL("https://picasaweb.google.com/data/feed/api/user/default/albumid/"+insertedEntry.getId());
 								PhotoEntry myPhoto = new PhotoEntry();
-								myPhoto.setClient("myClientName");
 								MediaFileSource myMedia = new MediaFileSource(output2, "image/jpeg");
 								myPhoto.setMediaSource(myMedia);
-								PhotoEntry returnedPhoto = myService.insert(albumPostUrl, myPhoto);								
+								myService.insert(albumPostUrl, myPhoto);
 								
 								/**
 								 * clear temp
-								 */
-								output.delete();
-								output2.delete();
+								 */								
+								if(resize) {
+									output2.delete();
+								}
 							}
 						} catch (ImageReadException r) {
 							log.info(ph + ": NO IMAGE");

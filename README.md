@@ -1,7 +1,7 @@
 Picasa Web Albums Console Uploader
 ==================================
 
-Java console application that upload list of files and/or directories into Google Picasa Web Albums service. 
+Java console application that upload list of files and/or directories into Google Picasa Web Albums service. It automatically resizes large images to 1600 px or to given value. 
 
 Build
 -----
@@ -28,6 +28,7 @@ Usage
      -h                 help
      -l                 list albums
      -p <password>      password [REQUIRED]
+     -px <px>           resolution [px], default 1600     
      -t <title>         album title
      -u <username>      user [REQUIRED]
      -v                 be verbose
