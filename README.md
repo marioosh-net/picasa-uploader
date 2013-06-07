@@ -1,15 +1,17 @@
 Picasa Web Albums Console Uploader
-===============
+==================================
 
-1. Build
----
+Java console application that upload list of files and/or directories into Google Picasa Web Albums service. 
+
+Build
+-----
 
     git clone git://github.com/marioosh-net/picasa-uploader.git
     cd picasa-uploader
     mvn package
 
-2. Usage
----
+Usage
+-----
 
   *List albums*
   
