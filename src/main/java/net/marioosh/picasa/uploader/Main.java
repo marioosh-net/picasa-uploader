@@ -30,6 +30,21 @@ import com.google.gdata.data.photos.AlbumEntry;
 import com.google.gdata.data.photos.PhotoEntry;
 import com.google.gdata.data.photos.UserFeed;
 
+/**
+ * picasa uploader
+ * 
+ * usage: java -jar picasa-uploader.jar [options] <dir1|file1> <dir2|file2>...
+ *  -d <arg>   album description
+ *  -h         help
+ *  -l         list albums
+ *  -p <arg>   password [REQUIRED]
+ *  -t <arg>   album title
+ *  -u <arg>   user [REQUIRED]
+ *  -v         be verbose
+ *         
+ * @author marioosh
+ *
+ */
 public class Main {
 
 	Logger log = Logger.getLogger(Main.class);
@@ -49,13 +64,19 @@ public class Main {
 			options.addOption("h", false, "help");
 			options.addOption("v", false, "be verbose");
 			Option user = new Option("u", true, "user [REQUIRED]");
+			user.setArgName("username");
 			user.setRequired(true);
 			options.addOption(user);
 			Option pass = new Option("p", true, "password [REQUIRED]");
+			pass.setArgName("password");
 			pass.setRequired(true);
 			options.addOption(pass);
-			options.addOption("t", true, "album title");
-			options.addOption("d", true, "album description");
+			Option titl = new Option("t", true, "album title");
+			titl.setArgName("title");
+			options.addOption(titl);
+			Option desc = new Option("d", true, "album description");
+			desc.setArgName("description");
+			options.addOption(desc);
 			options.addOption("l", false, "list albums");
 			CommandLine cmd = null;
 			try {
@@ -81,7 +102,7 @@ public class Main {
 			URL feedUrl = new URL(API_PREFIX + "default");
 
 			/**
-			 * list albums
+			 * -l switch = list albums
 			 */
 			if (cmd.hasOption("l")) {
 				UserFeed myUserFeed = myService.getFeed(feedUrl, UserFeed.class);
@@ -136,12 +157,14 @@ public class Main {
 								File output = File.createTempFile(UUID.randomUUID()+"", "");
 								output.deleteOnExit();
 								ImageIO.write(bufferedThumbnail, "jpeg", output);
-								
+							
+								/**
+								 * restore exif
+								 */
 								File output2 = File.createTempFile(UUID.randomUUID()+"", "");
 								output2.deleteOnExit();
 								FileOutputStream os = new FileOutputStream(output2);
 								new ExifRewriter().updateExifMetadataLossless(output, os, jpegMetadata.getExif().getOutputSet());
-								output.delete();
 								
 								/*
 								ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -160,6 +183,10 @@ public class Main {
 								myPhoto.setMediaSource(myMedia);
 								PhotoEntry returnedPhoto = myService.insert(albumPostUrl, myPhoto);								
 								
+								/**
+								 * clear temp
+								 */
+								output.delete();
 								output2.delete();
 							}
 						} catch (ImageReadException r) {
@@ -177,11 +204,21 @@ public class Main {
 		}
 	}
 
+	/**
+	 * syntax help
+	 * @param options
+	 */
 	private void syntax(Options options) {
 		HelpFormatter formatter = new HelpFormatter();
 		formatter.printHelp("java -jar picasa-uploader.jar [options] <dir1|file1> <dir2|file2>...", options);
 	}
 
+	/**
+	 * scan paths and return list of all files
+	 * @param paths
+	 * @param files
+	 * @return
+	 */
 	private List<String> list(String[] paths, List<String> files) {
 		if (files == null) {
 			files = new ArrayList<String>();
@@ -204,6 +241,10 @@ public class Main {
 		return files;
 	}
 
+	/**
+	 * main
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		Main.args = args;
 		new Main();
